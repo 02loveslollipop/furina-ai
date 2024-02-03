@@ -1,4 +1,3 @@
-
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import PeftConfig, PeftModel
 from huggingface_hub import login
@@ -90,6 +89,6 @@ if __name__ == "__main__":
     
     model = CUDAInference(config.model,config.token,prompt)
     
-    print(model.generate("what is your name?", max_new_tokens=20, repetition_penalty=1.2))
+    print(model.generate("hello", max_new_tokens=20, repetition_penalty=1.2))
 
 #GPU 44 segundos

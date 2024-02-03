@@ -5,3 +5,4 @@ questions-dataset.json
 /__pycache__/
 /.vscode/
 /.ipynb_checkpoints/
+phi2.py
