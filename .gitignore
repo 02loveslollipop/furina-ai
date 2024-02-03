@@ -1,0 +1,7 @@
+config.yml
+*.code-workspace
+prompt.txt
+questions-dataset.json
+/__pycache__/
+/.vscode/
+/.ipynb_checkpoints/
