@@ -1,94 +1,60 @@
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from peft import PeftConfig, PeftModel
 from huggingface_hub import login
 import torch
-import datetime as dt
-from confLoader import ConfLoader
 
 class Inference:
-    alpaca_prompt = """Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request as Furina.
-
-### Instruction:
-{}
-        
-"""
-
-    prompt = """
-### Input:
-{}
-
-### Response:
-        
-""" 
     
-    def reset(self,prompt: str = None) -> None:
-        
-        if prompt is None:
-            self.batch = self.alpaca_prompt.format(self.prompt)
-        else:
-            self.batch = self.alpaca_prompt.format(prompt)
+    def reset(self):
+        self.messages = [
+            {
+                "role": "system",
+                "content": self.prompt,
+            },
+        ]
     
-    def __init__(self, model_name: str,huggingface_token: str ,prompt: str, device: str = "cpu") -> None:
+    def __init__(self,load_in_4bit: bool, load_in_8bit: bool,huggingface_token: str, prompt: str = "You are a helpful assistant that answer questions",model_name: str = "02loveslollipop/Furina-2_6-phi-2",device: str = "cuda",torch_dtype: str = "auto") -> None:
+        compute_dtype = getattr(torch, "float16")
         
+        if load_in_4bit:
+            bnb_config = BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_quant_type='nf4',
+                bnb_4bit_compute_dtype=compute_dtype,
+                bnb_4bit_use_double_quant=True,
+            )
+            self.load_in_4bit = True
+            self.load_in_8bit = False
+        
+        if load_in_8bit and not load_in_4bit:
+            bnb_config = BitsAndBytesConfig(
+                load_in_8bit=True,
+                bnb_8bit_quant_type='nf4',
+                bnb_8bit_compute_dtype=compute_dtype,
+                bnb_8bit_use_double_quant=True,
+            )
+            self.load_in_4bit = False
+            self.load_in_8bit = True
+            
+        if load_in_4bit and load_in_8bit:
+            raise UserWarning("Both load_in_4bit and load_in_8bit are set to True, Using 4 bit quantization")
+        
+        torch.set_default_device(device)
         login(token=huggingface_token)
-        self.prompt = prompt
-        self.device = device
+        peft = PeftConfig.from_pretrained(model_name, trust_remote_code=True,torch_dtype=torch_dtype,quantization_config=bnb_config)
+        self.model = AutoModelForCausalLM.from_pretrained(peft.base_model_name_or_path,trust_remote_code=True, torch_dtype=torch_dtype,quantization_config=bnb_config)
+        self.tokenizer = AutoTokenizer.from_pretrained(peft.base_model_name_or_path, trust_remote_code=True,quantization_config=bnb_config)
+        self.model = PeftModel(self.model, peft)
+        
+        self.messages = []
+        self. prompt = prompt
         self.reset()
-        config = PeftConfig.from_pretrained(model_name)
-        self.model = AutoModelForCausalLM.from_pretrained(config.base_model_name_or_path,return_dict=True)
-        self.tokenizer = AutoTokenizer.from_pretrained(config.base_model_name_or_path)
-        self.model = PeftModel.from_pretrained(self.model,model_name)
-    
-    def generate(self, text: str, max_new_tokens: int =200, repetition_penalty: float =1.2) -> str:
-                
-        self.batch = self.batch + self.prompt.format(text)
-        inputs = self.tokenizer(self.batch, return_tensors='pt').to("cuda")
-        begin = dt.datetime.now()
-        outputs = self.model.generate(**inputs, max_new_tokens=max_new_tokens,repetition_penalty=repetition_penalty)
-        self.batch = f"{self.tokenizer.decode(outputs[0], skip_special_tokens=True)}\n"
-        print(f"{len(outputs[0])} tokens generated in {dt.datetime.now()-begin} seconds.")
-        return self.batch
         
-class CPUInference(Inference):
-    def __init__(self, model_name: str,huggingface_token: str ,prompt: str):
-        super().__init__(model_name,huggingface_token,prompt,device="cpu")
-        self.device = "cpu"
-        
-    def generate(self, text, max_new_tokens=200, repetition_penalty=1.2):
-        self.batch = self.batch + self.prompt.format(text)
-        inputs = self.tokenizer(self.batch, return_tensors='pt').to("cpu")
-        begin = dt.datetime.now()
-        outputs = self.model.generate(**inputs, max_new_tokens=max_new_tokens,repetition_penalty=repetition_penalty)
-        self.batch = f"{self.tokenizer.decode(outputs[0], skip_special_tokens=True)}\n"
-        print(f"{len(outputs[0])} tokens generated in {dt.datetime.now()-begin} seconds.")
-        return self.batch
-
-class CUDAInference(Inference):
-    def __init__(self, model_name: str,huggingface_token: str ,prompt: str,device: str = "cuda") -> None:
-        super().__init__(model_name,huggingface_token,prompt,device=device)
-        self.device = device
-        
-    def generate(self, text: str, max_new_tokens: int =200, repetition_penalty: float =1.2) -> str:
-        self.batch = self.batch + self.prompt.format(text)
-        inputs = self.tokenizer(self.batch, return_tensors='pt').to(self.device)
-        print(self.batch)
-        begin = dt.datetime.now()
-        outputs = self.model.generate(**inputs, max_new_tokens=max_new_tokens,repetition_penalty=repetition_penalty)
-        self.batch = f"{self.tokenizer.decode(outputs[0], skip_special_tokens=True)}\n"
-        print(f"{len(outputs[0])} tokens generated in {dt.datetime.now()-begin} seconds.")
-        return self.batch
-       
-        
-if __name__ == "__main__":
-    
-    config = ConfLoader()
-    
-    with open("prompt.txt", "r") as file:
-        prompt = file.read()
-        file.close()
-    
-    model = CUDAInference(config.model,config.token,prompt)
-    
-    print(model.generate("hello", max_new_tokens=20, repetition_penalty=1.2))
-
-#GPU 44 segundos
+    def generate(self, input: str, max_new_tokens: int = 200, do_sample: bool = True, temperature: float = 1.0, top_k: int = 50, top_p: float = 0.95) -> str:
+        self.messages.append({"role": "user", "content": input})
+        prompt = self.tokenizer.apply_chat_template(self.messages, tokenize=False, add_generation_prompt=True)
+        inputs = self.tokenizer(prompt, return_tensors="pt")
+        outputs = self.model.generate(**inputs, max_new_tokens=max_new_tokens, do_sample=do_sample, temperature=temperature, top_k=top_k, top_p=top_p)
+        text = self.tokenizer.batch_decode(outputs)[0]
+        self.messages.append({"role": "system", "content": text})
+        return text  
