@@ -57,4 +57,4 @@ class Inference:
         outputs = self.model.generate(**inputs, max_new_tokens=max_new_tokens, do_sample=do_sample, temperature=temperature, top_k=top_k, top_p=top_p)
         text = self.tokenizer.batch_decode(outputs)[0]
         self.messages.append({"role": "system", "content": text})
-        return text  
+        return text
