@@ -1,3 +1,15 @@
-token: your_huggingface_token # replace with your Hugging Face API token 
-model: 02loveslollipop/furina_ai_mistral_7b # replace with your model name or path
-device: cpu # replace with 'cuda' if you are using CUDA compatible GPU, otherwise 'cpu'
+model: #config for LLM model
+  token: your_huggingface_token # replace with your huggingface token
+  model: 02loveslollipop/Furina-2_6-phi-2 #replace with your model name in huggingface hub, or your model path
+  device: cuda # replace with cuda or cpu
+  max_new_tokens: 100 # replace with your desired max new tokens
+  temperature: 0.8 # replace with your desired temperature
+  top_k: 50 # replace with your desired top_k
+  top_p: 0.9 # replace with your desired top_p
+  do_sample: True # True if you want to sample, False otherwise
+
+api: #config for API
+  port: '8080' # replace with your desired port
+  host: '0.0.0.0' # replace with your desired host
+  debug: True # True if you want to run in debug mode, False otherwise
+  token: 'your_super_secret_token' # replace with your desired token
