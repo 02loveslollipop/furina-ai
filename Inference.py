@@ -2,6 +2,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from peft import PeftConfig, PeftModel
 from huggingface_hub import login
 import torch
+import time
 
 class Inference:
     
@@ -36,6 +37,9 @@ class Inference:
             self.load_in_4bit = False
             self.load_in_8bit = True
             
+        if not load_in_4bit and not load_in_8bit:
+            bnb_config = BitsAndBytesConfig()
+            
         if load_in_4bit and load_in_8bit:
             raise UserWarning("Both load_in_4bit and load_in_8bit are set to True, Using 4 bit quantization")
         
@@ -50,12 +54,15 @@ class Inference:
         self. prompt = prompt
         self.reset()
         
-    def generate(self, input: str, max_new_tokens: int = 200, do_sample: bool = True, temperature: float = 1.0, top_k: int = 50, top_p: float = 0.95) -> str:
+    def generate(self, input: str, max_new_tokens: int = 200, do_sample: bool = True, temperature: float = 1.0, top_k: int = 50, top_p: float = 0.95) -> tuple[str, float, int]:
         self.messages.append({"role": "user", "content": input})
         prompt = self.tokenizer.apply_chat_template(self.messages, tokenize=False, add_generation_prompt=True)
-        inputs = self.tokenizer(prompt, return_tensors="pt")
+        begin = time.time()
+        inputs = self.tokenizer(prompt, return_tensors="pt").to(self.model.device)
         outputs = self.model.generate(**inputs, max_new_tokens=max_new_tokens, do_sample=do_sample, temperature=temperature, top_k=top_k, top_p=top_p,eos_token_id=self.tokenizer.eos_token_id, forced_eos_token_id=self.tokenizer.eos_token_id)
         text = self.tokenizer.batch_decode(outputs)[0]
+        used_time = time.time() - begin
+        length = len(inputs["input_ids"][0]) - len(outputs[0])
         text_generated = text[len(prompt):][:-10]
         self.messages.append({"role": "assistant", "content": text_generated})
-        return text
+        return (text_generated, used_time, length)

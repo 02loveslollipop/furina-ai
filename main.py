@@ -14,7 +14,7 @@ if __name__ == "__main__":
         print("prompt.txt not found")
         prompt = "You are a helpful assistant that answer questions"
     
-    ai_model = Inference(load_in_4bit=True, load_in_8bit=False, huggingface_token=conf.token, model_name=conf.model, device=conf.device, torch_dtype="auto",prompt=prompt)
+    ai_model = Inference(load_in_4bit=False, load_in_8bit=True, huggingface_token=conf.token, model_name=conf.model, device=conf.device, torch_dtype="auto",prompt=prompt)
     
     next = True
     
