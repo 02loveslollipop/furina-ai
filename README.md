@@ -1,5 +1,5 @@
 # DiscordGPTChatbot-API
-> A simple rest api for a chatbot using hugginngface transformers and Flask, specifically design to operate with [DiscordGPTChatbot](https://github.com/02loveslollipop/DiscordGPTChatBot).
+> A simple rest API for LLM text-to-text generation using hugginngface transformers and flask, specifically design to operate with [DiscordGPTChatbot](https://github.com/02loveslollipop/DiscordGPTChatBot).
 
 ## Introduction
 This project is design to allow to avoid the need to use the OpenAI API and their model (gpt-3.5-turbo, gpt-4) and instead give the user the ability to use their own model and host it on their own server. Thus allwoing the user to have full control over the model and the data it is trained on, allowing a more secure, private and customisable experience. This project is specifically designed to work with [DiscordGPTChatbot](https://github.com/02loveslollipop/DiscordGPTChatBot) but can be used with any other project that requieres an API for a huggeingface LLM model.
