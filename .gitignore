@@ -6,3 +6,4 @@ questions-dataset.json
 /.vscode/
 /.ipynb_checkpoints/
 phi2.py
+*.csv
