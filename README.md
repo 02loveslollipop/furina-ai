@@ -50,9 +50,7 @@ curl --header "token: your-token" --header "request: what is a reference in obje
 
 ## Known Issues
 
-1. The server is not secure, it's recommended to use a reverse proxy with a secure connection.
-
-2. The server is not designed to handle multiple requests at the same time. A queue system is being implemented.
+1. The server is not designed to handle multiple requests at the same time. A queue system is being implemented.
 
 ## License
 
