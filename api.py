@@ -26,7 +26,6 @@ def generate():
         return jsonify({'error': 'Invalid token'}), 401
  
     prompt = request.headers.get("request")
-    print(prompt) #TODO: remove this line of shit bu
     
     if type(prompt) != str:
         return jsonify({'error': 'Invalid request'}), 400
