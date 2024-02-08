@@ -54,7 +54,8 @@ class Inference:
         self.messages.append({"role": "user", "content": input})
         prompt = self.tokenizer.apply_chat_template(self.messages, tokenize=False, add_generation_prompt=True)
         inputs = self.tokenizer(prompt, return_tensors="pt")
-        outputs = self.model.generate(**inputs, max_new_tokens=max_new_tokens, do_sample=do_sample, temperature=temperature, top_k=top_k, top_p=top_p)
+        outputs = self.model.generate(**inputs, max_new_tokens=max_new_tokens, do_sample=do_sample, temperature=temperature, top_k=top_k, top_p=top_p,eos_token_id=self.tokenizer.eos_token_id, forced_eos_token_id=self.tokenizer.eos_token_id)
         text = self.tokenizer.batch_decode(outputs)[0]
+        text_generated = text[len(prompt):][:-10]
         self.messages.append({"role": "system", "content": text})
         return text
