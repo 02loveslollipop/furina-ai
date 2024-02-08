@@ -32,8 +32,9 @@ def generate():
         return jsonify({'error': 'Invalid request'}), 400
     
     response, time, tokens = ai_model.generate(prompt,conf.max_new_tokens,conf.do_sample,conf.temperature,conf.top_k,conf.top_p)
+    print(f"generated {tokens} tokens, in {time} seconds.\n {tokens/time} tokens/second")
     
-    return jsonify()
+    return jsonify(response)
 
 if __name__ == "__main__":
     app.run(host=conf.host,port=conf.port)
