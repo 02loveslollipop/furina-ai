@@ -7,3 +7,5 @@ questions-dataset.json
 /.ipynb_checkpoints/
 phi2.py
 *.csv
+/venv/
+oryx-build-commands.txt
