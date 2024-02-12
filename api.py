@@ -20,7 +20,7 @@ def generate():
     if 'Token' not in request.headers:
         return jsonify({'error': 'No token in the request'}), 401
 
-    token = request.headers.get('Token')
+    token = request.headers.get('token')
     
     if token != conf.api_token:
         return jsonify({'error': 'Invalid token'}), 401
