@@ -17,7 +17,7 @@ ai_model = Inference(load_in_4bit=conf.load_in_4bit, load_in_8bit=conf.load_in_8
 
 @app.route('/generate', methods=['GET'])
 def generate():
-    if 'Token' not in request.headers:
+    if 'token' not in request.headers:
         return jsonify({'error': 'No token in the request'}), 401
 
     token = request.headers.get('token')
