@@ -14,8 +14,13 @@ class Inference:
             },
         ]
     
-    def __init__(self,load_in_4bit: bool, load_in_8bit: bool,huggingface_token: str, prompt: str = "You are a helpful assistant that answer questions",model_name: str = "02loveslollipop/Furina-2_6-phi-2",device: str = "cuda",torch_dtype: str = "auto") -> None:
+    def __init__(self,load_in_4bit: bool, load_in_8bit: bool,huggingface_token: str, prompt: str = "You are a helpful assistant that answer questions",model_name: str = "02loveslollipop/Furina-2_6-phi-2",device: str = "cuda",torch_dtype: str = "auto",use_flash_attention_2: bool = False) -> None:
         compute_dtype = getattr(torch, "float16")
+        
+        if use_flash_attention_2:
+            attn_implementation = "flash_attention_2"
+        else:
+            attn_implementation = None
         
         if load_in_4bit:
             bnb_config = BitsAndBytesConfig(
@@ -23,6 +28,8 @@ class Inference:
                 bnb_4bit_quant_type='nf4',
                 bnb_4bit_compute_dtype=compute_dtype,
                 bnb_4bit_use_double_quant=True,
+                attn_implementation=attn_implementation,
+                
             )
             self.load_in_4bit = True
             self.load_in_8bit = False
@@ -33,6 +40,7 @@ class Inference:
                 bnb_8bit_quant_type='nf4',
                 bnb_8bit_compute_dtype=compute_dtype,
                 bnb_8bit_use_double_quant=True,
+                attn_implementation=attn_implementation,
             )
             self.load_in_4bit = False
             self.load_in_8bit = True
@@ -46,7 +54,7 @@ class Inference:
         torch.set_default_device(device)
         login(token=huggingface_token)
         peft = PeftConfig.from_pretrained(model_name, trust_remote_code=True,torch_dtype=torch_dtype,quantization_config=bnb_config)
-        self.model = AutoModelForCausalLM.from_pretrained(peft.base_model_name_or_path,trust_remote_code=True, torch_dtype=torch_dtype,quantization_config=bnb_config)
+        self.model = AutoModelForCausalLM.from_pretrained(peft.base_model_name_or_path,trust_remote_code=True, torch_dtype=torch_dtype,quantization_config=bnb_config,attn_implementation=attn_implementation)
         self.tokenizer = AutoTokenizer.from_pretrained(peft.base_model_name_or_path, trust_remote_code=True,quantization_config=bnb_config)
         self.model = PeftModel(self.model, peft)
         
