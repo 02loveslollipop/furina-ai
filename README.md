@@ -1,4 +1,4 @@
-# DiscordGPTChatbot-API
+# Furina AI
 > A simple rest API for LLM text generation using hugginngface transformers and flask, specifically design to operate with [DiscordGPTChatbot](https://github.com/02loveslollipop/DiscordGPTChatBot).
 
 ## Introduction
